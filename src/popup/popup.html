@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Highlight Terms</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <h1 class="popup-title">Highlight Terms</h1>
+
+    <!-- Add Term Form -->
+    <form id="add-term-form" class="add-form">
+      <div class="form-row">
+        <input
+          type="text"
+          id="term-input"
+          class="term-input"
+          placeholder="Enter term..."
+          maxlength="100"
+          required
+        >
+        <input
+          type="color"
+          id="color-picker"
+          class="color-picker"
+          value="#ff69b4"
+          aria-label="Select highlight color"
+        >
+      </div>
+      <button type="submit" class="add-button">Add</button>
+    </form>
+
+    <!-- Feedback Message -->
+    <div id="feedback" class="feedback hidden"></div>
+
+    <!-- Terms List -->
+    <div id="terms-list" class="terms-list">
+      <!-- Terms will be rendered here -->
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

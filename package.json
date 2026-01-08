@@ -1,0 +1,17 @@
+{
+  "name": "apps-script-overhaul",
+  "version": "1.0.0",
+  "description": "Chrome extension to highlight terms in Monaco editor on script.google.com",
+  "scripts": {
+    "build": "tsc && npm run copy-static",
+    "watch": "tsc --watch",
+    "copy-static": "node scripts/copy-static.js"
+  },
+  "keywords": ["chrome-extension", "monaco-editor", "highlight"],
+  "author": "Will",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.1.32",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,208 @@
+/* Popup styles for Chrome extension */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.popup-container {
+  width: 320px;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.popup-title {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Add Form Styles */
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-row {
+  display: flex;
+  gap: 8px;
+}
+
+.term-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.term-input:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.color-picker {
+  width: 40px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+}
+
+.color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.add-button {
+  padding: 8px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.add-button:hover {
+  background-color: #1976d2;
+}
+
+.add-button:active {
+  background-color: #1565c0;
+}
+
+/* Feedback Styles */
+.feedback {
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.feedback.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.feedback.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.feedback.hidden {
+  display: none;
+}
+
+/* Terms List Styles */
+.terms-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.term-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.term-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Inline color picker (smaller than add form picker) */
+.term-color-picker {
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: none;
+}
+
+.term-color-picker:hover {
+  border-color: #999;
+}
+
+.term-color-picker:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 1px;
+}
+
+.term-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.term-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+/* Term text takes remaining space */
+.term-text {
+  flex: 1;
+  word-break: break-word;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Remove button */
+.remove-button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: #999;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-button:hover {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.remove-button:active {
+  background-color: #ffcdd2;
+}
+
+.remove-button:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 1px;
+}
+
+.empty-message {
+  color: #666;
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+  padding: 16px 0;
+}

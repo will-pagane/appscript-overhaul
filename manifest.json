@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Apps Script Highlight Extension",
+  "version": "1.0.0",
+  "description": "Highlight configured terms in Monaco editor on script.google.com",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://script.google.com/*"],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Highlight Terms"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://script.google.com/*"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
