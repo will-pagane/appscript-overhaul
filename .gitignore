@@ -38,8 +38,6 @@ web-ext-artifacts/
 # Claude Code local settings
 .claude/
 
-# BMAD working files (keep templates, ignore outputs)
-_bmad-output/
 
 # Temporary files
 *.tmp
