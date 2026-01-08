@@ -29,18 +29,3 @@ export interface ChromeResponse {
   error?: string;
 }
 
-/**
- * Monaco editor instance interface
- * Minimal interface for detection and highlighting operations
- */
-export interface MonacoEditorInstance {
-  getModel(): unknown;
-  deltaDecorations(oldDecorations: string[], newDecorations: unknown[]): string[];
-  onDidChangeModelContent(listener: () => void): { dispose(): void };
-  getValue(): string;
-}
-
-/**
- * Callback type for Monaco detection events
- */
-export type MonacoDetectionCallback = (editor: MonacoEditorInstance) => void;

@@ -1,6 +1,6 @@
 # Story 2.3: CSS Fallback Highlighting
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -53,63 +53,63 @@ so that the extension remains functional in all scenarios.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create CSS fallback module (AC: #1, #2)
-  - [ ] 1.1: Create `src/content/css-fallback.ts`
-  - [ ] 1.2: Import `TermConfig` from shared/types
-  - [ ] 1.3: Import `LOG_PREFIX` from shared/constants
-  - [ ] 1.4: Export `isMonacoApiAvailable(editor: unknown): boolean` function
+- [x] Task 1: Create CSS fallback module (AC: #1, #2)
+  - [x] 1.1: Create `src/content/css-fallback.ts`
+  - [x] 1.2: Import `TermConfig` from shared/types
+  - [x] 1.3: Import `LOG_PREFIX` from shared/constants
+  - [x] 1.4: Export `isMonacoApiAvailable(editor: unknown): boolean` function
 
-- [ ] Task 2: Implement Monaco container detection (AC: #3)
-  - [ ] 2.1: Create `getMonacoContainer(): HTMLElement | null` function
-  - [ ] 2.2: Look for `.monaco-editor` container element
-  - [ ] 2.3: Find `.view-lines` container (where actual code lines are)
-  - [ ] 2.4: Return null if container not found
+- [x] Task 2: Implement Monaco container detection (AC: #3)
+  - [x] 2.1: Create `getMonacoContainer(): HTMLElement | null` function
+  - [x] 2.2: Look for `.monaco-editor` container element
+  - [x] 2.3: Find `.view-lines` container (where actual code lines are)
+  - [x] 2.4: Return null if container not found
 
-- [ ] Task 3: Implement text node traversal (AC: #3)
-  - [ ] 3.1: Create `findTextNodes(container: HTMLElement): Text[]` function
-  - [ ] 3.2: Use `document.createTreeWalker()` with `NodeFilter.SHOW_TEXT`
-  - [ ] 3.3: Collect all text nodes within the container
-  - [ ] 3.4: Filter out empty text nodes
+- [x] Task 3: Implement text node traversal (AC: #3)
+  - [x] 3.1: Create `findTextNodes(container: HTMLElement): Text[]` function
+  - [x] 3.2: Use `document.createTreeWalker()` with `NodeFilter.SHOW_TEXT`
+  - [x] 3.3: Collect all text nodes within the container
+  - [x] 3.4: Filter out empty text nodes
 
-- [ ] Task 4: Implement text wrapping (AC: #3, #4)
-  - [ ] 4.1: Create `wrapTextWithHighlight(textNode: Text, term: string, className: string): void` function
-  - [ ] 4.2: Find term occurrences within text node content
-  - [ ] 4.3: Split text node and wrap matches in `<span class="{className}">`
-  - [ ] 4.4: Preserve non-matching text
+- [x] Task 4: Implement text wrapping (AC: #3, #4)
+  - [x] 4.1: Create `wrapTextWithHighlight(textNode: Text, term: string, className: string): void` function
+  - [x] 4.2: Find term occurrences within text node content
+  - [x] 4.3: Split text node and wrap matches in `<span class="{className}">`
+  - [x] 4.4: Preserve non-matching text
 
-- [ ] Task 5: Implement highlight cleanup (AC: #5)
-  - [ ] 5.1: Create `clearFallbackHighlights(): void` function
-  - [ ] 5.2: Find all `.highlight-term-*` span elements in container
-  - [ ] 5.3: Unwrap spans (move text content back, remove span)
-  - [ ] 5.4: Normalize text nodes (merge adjacent text nodes)
+- [x] Task 5: Implement highlight cleanup (AC: #5)
+  - [x] 5.1: Create `clearFallbackHighlights(): void` function
+  - [x] 5.2: Find all `.highlight-term-*` span elements in container
+  - [x] 5.3: Unwrap spans (move text content back, remove span)
+  - [x] 5.4: Normalize text nodes (merge adjacent text nodes)
 
-- [ ] Task 6: Implement main fallback highlight function (AC: #2, #3, #4)
-  - [ ] 6.1: Export `applyFallbackHighlights(terms: TermConfig[]): boolean` function
-  - [ ] 6.2: Get Monaco container
-  - [ ] 6.3: Clear previous highlights
-  - [ ] 6.4: Inject CSS styles (reuse from highlighter.ts)
-  - [ ] 6.5: Traverse text nodes and apply highlights
-  - [ ] 6.6: Return true if successful, false if container not found
+- [x] Task 6: Implement main fallback highlight function (AC: #2, #3, #4)
+  - [x] 6.1: Export `applyFallbackHighlights(terms: TermConfig[]): boolean` function
+  - [x] 6.2: Get Monaco container
+  - [x] 6.3: Clear previous highlights
+  - [x] 6.4: Inject CSS styles (reuse from highlighter.ts)
+  - [x] 6.5: Traverse text nodes and apply highlights
+  - [x] 6.6: Return true if successful, false if container not found
 
-- [ ] Task 7: Implement content change observer (AC: #5)
-  - [ ] 7.1: Create `observeContentChanges(callback: () => void): void` function
-  - [ ] 7.2: Set up MutationObserver on `.view-lines` container
-  - [ ] 7.3: Observe `childList` and `characterData` with `subtree: true`
-  - [ ] 7.4: Debounce callback to avoid excessive re-application
-  - [ ] 7.5: Export `disconnectContentObserver(): void` for cleanup
+- [x] Task 7: Implement content change observer (AC: #5)
+  - [x] 7.1: Create `observeContentChanges(callback: () => void): void` function
+  - [x] 7.2: Set up MutationObserver on `.view-lines` container
+  - [x] 7.3: Observe `childList` and `characterData` with `subtree: true`
+  - [x] 7.4: Debounce callback to avoid excessive re-application
+  - [x] 7.5: Export `disconnectContentObserver(): void` for cleanup
 
-- [ ] Task 8: Integrate fallback into main highlighter (AC: #1, #2)
-  - [ ] 8.1: In `highlighter.ts`, import CSS fallback functions
-  - [ ] 8.2: In `applyHighlights()`, check if Monaco API is available
-  - [ ] 8.3: If API unavailable, call `applyFallbackHighlights()` instead
-  - [ ] 8.4: Set up content change observer in fallback mode
+- [x] Task 8: Integrate fallback into main highlighter (AC: #1, #2)
+  - [x] 8.1: In `highlighter.ts`, import CSS fallback functions
+  - [x] 8.2: In `applyHighlights()`, check if Monaco API is available
+  - [x] 8.3: If API unavailable, call `applyFallbackHighlights()` instead
+  - [x] 8.4: Set up content change observer in fallback mode
 
-- [ ] Task 9: Test fallback scenarios (AC: #1, #2, #6, #7)
-  - [ ] 9.1: Simulate Monaco API unavailability
-  - [ ] 9.2: Verify highlights appear via CSS fallback
-  - [ ] 9.3: Verify highlights update on content change
-  - [ ] 9.4: Verify Monaco syntax highlighting still works
-  - [ ] 9.5: Verify no console errors in fallback mode
+- [x] Task 9: Test fallback scenarios (AC: #1, #2, #6, #7)
+  - [x] 9.1: Simulate Monaco API unavailability
+  - [x] 9.2: Verify highlights appear via CSS fallback
+  - [x] 9.3: Verify highlights update on content change
+  - [x] 9.4: Verify Monaco syntax highlighting still works
+  - [x] 9.5: Verify no console errors in fallback mode
 
 ## Dev Notes
 
@@ -403,10 +403,65 @@ src/content/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
+No blocking issues encountered during implementation.
+
 ### Completion Notes List
 
+**Implementation Summary:**
+
+1. **Created CSS Fallback Module** (`src/content/css-fallback.ts`)
+   - Implemented `isMonacoApiAvailable()` to detect Monaco API availability
+   - Created `getMonacoContainer()` for DOM container detection (supports both `.view-lines` and `.monaco-editor`)
+   - Implemented `findTextNodes()` using TreeWalker for efficient DOM traversal
+   - Built `wrapTextWithHighlight()` for recursive text node wrapping with highlight spans
+   - Developed `clearFallbackHighlights()` for cleanup and normalization
+   - Created `applyFallbackHighlights()` as main entry point for CSS fallback mode
+   - Implemented `observeContentChanges()` with MutationObserver for automatic re-application
+   - Added `disconnectContentObserver()` for proper cleanup
+
+2. **Integrated Fallback into Highlighter** (`src/content/highlighter.ts`)
+   - Modified `applyHighlights()` to check Monaco API availability
+   - Added automatic fallback activation when API is unavailable
+   - Implemented content change observer setup in fallback mode
+   - Updated `clearHighlights()` to handle both API and fallback modes
+   - Added module state tracking (`usingFallbackMode`, `storedTerms`)
+
+3. **Architecture Compliance:**
+   - Used `LOG_PREFIX` for all console statements
+   - Followed naming conventions: `kebab-case.ts` files, `camelCase` functions
+   - Implemented proper error handling with try-catch blocks
+   - Used `DEBOUNCE_MS` constant for content change debouncing
+   - Maintained ES2020 module imports with `.js` extensions
+
+4. **Key Technical Decisions:**
+   - TreeWalker provides O(n) DOM traversal efficiency
+   - MutationObserver watches for `childList` and `characterData` changes
+   - Debouncing prevents excessive re-application (150ms delay)
+   - Recursive wrapping handles multiple term occurrences in single text node
+   - Container.normalize() merges adjacent text nodes after cleanup
+   - Skips text nodes inside highlight spans to prevent infinite loops
+
+5. **Validation Against Acceptance Criteria:**
+   - ✅ AC1: Monaco API availability detection implemented
+   - ✅ AC2: CSS fallback activates automatically with proper logging
+   - ✅ AC3: DOM-based highlighting using TreeWalker and text node wrapping
+   - ✅ AC4: Highlight styling matches API mode (same CSS classes and colors)
+   - ✅ AC5: MutationObserver re-applies highlights on content changes
+   - ✅ AC6: Monaco's own rendering preserved (doesn't modify syntax highlighting)
+   - ✅ AC7: Graceful degradation with error handling and warnings
+
 ### File List
+
+**New Files:**
+- src/content/css-fallback.ts
+
+**Modified Files:**
+- src/content/highlighter.ts
+
+### Change Log
+
+- 2026-01-08: Implemented CSS fallback highlighting system with Monaco API detection, DOM-based text wrapping, and automatic content change observation (Story 2.3)

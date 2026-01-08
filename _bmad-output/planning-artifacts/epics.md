@@ -124,12 +124,14 @@ User can fully manage highlight configurations via the extension popup, with per
 
 **User Outcome:** After this epic, user can install the extension, open the popup on script.google.com, add/edit/remove terms with colors, and configurations are saved and synced across browsers.
 
-### Epic 2: Monaco Editor Highlighting Engine
-User sees configured terms visually highlighted in the Monaco editor with real-time updates.
+### Epic 2: DOM-Based Highlighting Engine
+User sees configured terms visually highlighted in the editor with real-time updates.
 
 **FRs covered:** FR6, FR7, FR8, FR9, FR10
 
-**User Outcome:** After this epic, configured terms appear colored in the Monaco editor automatically, updating in real-time as the user edits code.
+**User Outcome:** After this epic, configured terms appear colored in the editor automatically, updating in real-time as the user edits code.
+
+**⚠️ Architecture Pivot:** This epic was originally planned to use Monaco Editor APIs (`window.monaco.editor.getEditors()`, `editor.deltaDecorations()`). During implementation (Story 2.1), we discovered Google Apps Script does NOT expose these APIs. We pivoted to a DOM-only approach (TreeWalker + span injection), which works correctly. Stories 2.1 and 2.2 are marked **DEPRECATED** but kept for reference. Stories 2.4-2.6 complete the refactor to simplify the codebase. See ADR: `architecture-pivot-dom-only.md`
 
 ---
 
@@ -210,11 +212,13 @@ So that I can manage my highlight configuration over time.
 
 ---
 
-## Epic 2: Monaco Editor Highlighting Engine
+## Epic 2: DOM-Based Highlighting Engine
 
-User sees configured terms visually highlighted in the Monaco editor with real-time updates.
+User sees configured terms visually highlighted in the editor with real-time updates.
 
-### Story 2.1: Content Script Foundation and Monaco Detection
+### Story 2.1: Content Script Foundation and Monaco Detection **[DEPRECATED]**
+
+**⚠️ This story was based on the incorrect assumption that Google Apps Script exposes Monaco Editor APIs. It has been implemented but the API detection never succeeds. See Stories 2.4-2.6 for cleanup.**
 
 As a user,
 I want the extension to automatically detect when the Monaco editor loads,
@@ -236,7 +240,9 @@ So that highlighting can be applied without manual intervention.
 **Then** a log message appears: "[Highlight Extension] Monaco editor detected"
 **And** the extension is ready to apply highlights
 
-### Story 2.2: Term Highlighting with Monaco Decorators API
+### Story 2.2: Term Highlighting with Monaco Decorators API **[DEPRECATED]**
+
+**⚠️ This story attempted to use `editor.deltaDecorations()` API which is NOT exposed by Google Apps Script. The implementation exists but never executes. See Story 2.5 for refactor to remove this code.**
 
 As a user,
 I want my configured terms to appear highlighted in the editor,
@@ -258,11 +264,13 @@ So that I can visually track important objects in my code.
 **When** highlights are applied
 **Then** `editor.deltaDecorations()` is used for clean integration
 
-### Story 2.3: CSS Fallback Highlighting
+### Story 2.3: DOM-Based Highlighting
+
+**✅ This is the ONLY working approach!** Originally planned as "fallback", but since Monaco API is not exposed, this is the primary (and only) implementation.
 
 As a user,
-I want highlighting to work even if Monaco API is unavailable,
-So that the extension remains functional in all scenarios.
+I want my configured terms to appear highlighted in the editor via DOM manipulation,
+So that I can visually track important objects in my code.
 
 **Acceptance Criteria:**
 
@@ -272,11 +280,58 @@ So that the extension remains functional in all scenarios.
 **And** terms are still visually highlighted
 **And** a log message indicates fallback mode: "[Highlight Extension] Using CSS fallback"
 
-**Given** CSS fallback is active
+**Given** DOM highlighting is active
 **When** I edit code in the editor
-**Then** highlights continue to work (may need re-application on content change)
+**Then** highlights update automatically via MutationObserver
 
-### Story 2.4: Real-time Updates on Content and Config Changes
+### Story 2.4: Remove Monaco API Detection Logic **[REFACTOR]**
+
+As a developer,
+I want to remove the Monaco API detection logic that attempts to access `window.monaco.editor.getEditors()`,
+So that the codebase reflects the reality that Google Apps Script does NOT expose this API.
+
+**Acceptance Criteria:**
+- Remove `checkForMonaco()` function from monaco-detector.ts
+- Remove polling mechanism and related constants
+- Remove unused Monaco type definitions (IModelDeltaDecoration, etc.)
+- Simplify content.ts entry point (remove API detection calls)
+- Verify no breaking changes (highlighting still works)
+
+**See:** `_bmad-output/implementation-artifacts/2-4-remove-monaco-api-detection-logic.md`
+
+### Story 2.5: Refactor to DOM-Only Highlighter **[REFACTOR]**
+
+As a developer,
+I want to refactor the highlighter module to remove dual-mode complexity,
+So that the code reflects the single DOM-based approach that actually works.
+
+**Acceptance Criteria:**
+- Eliminate dual-mode logic from highlighter.ts (Monaco API vs DOM)
+- Rename `css-fallback.ts` → `dom-highlighter.ts`
+- Remove "fallback" terminology from all functions and logs
+- Consolidate into single-mode implementation
+- Preserve all working features (no functional regressions)
+
+**See:** `_bmad-output/implementation-artifacts/2-5-refactor-to-dom-only-highlighter.md`
+
+### Story 2.6: Update Architecture Documentation **[REFACTOR]**
+
+As a developer,
+I want architecture and planning documents updated to reflect the DOM-only approach,
+So that future development is guided by accurate information about what works.
+
+**Acceptance Criteria:**
+- Update architecture.md: Remove Monaco API approach, document DOM-only
+- Update project-context.md: Change rules to reflect DOM highlighting
+- Update epics.md: Mark Stories 2.1, 2.2 as DEPRECATED
+- Create ADR document: `architecture-pivot-dom-only.md`
+- Verify no misleading information remains in documentation
+
+**See:** `_bmad-output/implementation-artifacts/2-6-update-architecture-documentation.md`
+
+### ~~Story 2.4: Real-time Updates on Content and Config Changes~~ **[CANCELLED]**
+
+**❌ Functionality already implemented in Story 2.3.** MutationObserver for content changes and chrome.storage.onChanged for config updates are working.
 
 As a user,
 I want highlights to update automatically when I edit code or change my configuration,

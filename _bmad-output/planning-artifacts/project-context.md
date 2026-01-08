@@ -67,17 +67,19 @@ interface ChromeMessage {
 - Use constant `STORAGE_KEY = 'highlightTerms'` - never hardcode
 - Schema: `{ terms: Array<{ term: string, color: string }> }`
 
-### Monaco Integration Rules
+### DOM Highlighting Rules
 
-**Detection Strategy:**
-- Primary: MutationObserver watching for Monaco container
-- Fallback: Polling every 500ms with 10s timeout
-- NEVER assume Monaco is immediately available
+**Container Detection:**
+- Wait for `.view-lines` element to appear in DOM
+- Use MutationObserver for detection (efficient, non-blocking)
+- Google Apps Script does NOT expose `window.monaco` global
+- NEVER attempt to access Monaco Editor APIs (they are NOT available)
 
 **Highlighting Strategy:**
-- Primary: `editor.deltaDecorations()` API
-- Fallback: CSS class injection if API unavailable
-- ALWAYS implement both strategies
+- DOM-based only: TreeWalker + span wrapping + CSS classes
+- Apply highlights after `.view-lines` container detected
+- Re-apply on content changes (MutationObserver, debounced 150ms)
+- No Monaco API calls - API is encapsulated by Google
 
 **Performance:**
 - Debounce editor content changes: 150ms minimum
@@ -111,18 +113,20 @@ src/
 ### Critical Don't-Miss Rules
 
 **Anti-Patterns - NEVER DO:**
+- Attempting to access `window.monaco` (API is NOT exposed by Google Apps Script)
+- Attempting to use `editor.deltaDecorations()` or other Monaco APIs (NOT available)
 - Direct storage access without wrapper function
 - Hardcoded storage keys (use `STORAGE_KEY` constant)
 - Missing error handling on Chrome API calls
 - Synchronous message handlers without `return true`
-- Assuming Monaco API is available (always check + fallback)
 
 **Required Patterns - ALWAYS DO:**
-- Implement Monaco fallback (CSS) alongside Decorators API
+- Use DOM-only highlighting approach (TreeWalker + span wrapping)
+- Detect `.view-lines` container before applying highlights
 - Debounce editor change handlers (150ms)
 - Include `LOG_PREFIX` in all console statements
 - Use defined interfaces for messages and storage
-- Test both with and without Monaco API availability
+- Remember: Google Apps Script does NOT expose Monaco Editor APIs
 
 **Performance Requirements:**
 - Highlights applied within 100ms of page load

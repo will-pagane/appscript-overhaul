@@ -31,7 +31,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 9 NFRs driving architectural decisions:
 - Performance: <100ms highlight application, <200ms for config changes, no typing lag
 - Memory: <10MB footprint
-- Resilience: Graceful fallback if Monaco API unavailable
+- Resilience: Graceful fallback if Monaco API unavailable _(Note: API not exposed; DOM-only approach satisfies this by having no API dependency)_
 - Integration: Must not interfere with native Monaco functionality
 - Reliability: Immediate config saves, persistent highlights across refreshes
 
@@ -43,7 +43,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 ### Technical Constraints & Dependencies
 
 - Chrome Extension Manifest V3 (required standard)
-- Monaco Editor API exposure varies by host page implementation
+- Monaco Editor API is NOT exposed on script.google.com (DOM-only access)
 - Content script injection timing dependent on page load
 - Chrome Storage API limits (sync: 100KB total, 8KB per item)
 - Host permissions limited to script.google.com
@@ -51,9 +51,9 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 ### Cross-Cutting Concerns Identified
 
 1. **Popup-Content Communication:** Message passing between popup UI and content script
-2. **Initialization Timing:** Robust Monaco detection regardless of page load sequence
-3. **Fallback Strategy:** Decorators API preferred, CSS injection as fallback
-4. **Performance Optimization:** Debounce decorator application during rapid content changes
+2. **Initialization Timing:** Robust DOM container detection regardless of page load sequence
+3. **~~Fallback Strategy:~~ DOM-Only Approach:** Originally planned Decorators API with CSS fallback, but Monaco API is not exposed. DOM-based highlighting is the only viable approach. _(See Architecture Pivot section and ADR)_
+4. **Performance Optimization:** Debounce highlight re-application during rapid content changes
 5. **State Synchronization:** Keep popup UI in sync with actual applied highlights
 
 ## Starter Template Evaluation
@@ -193,22 +193,42 @@ interface HighlightMessage {
 
 ### Monaco Integration Architecture
 
-**Integration Strategy:** Hybrid (Decorators API with CSS fallback)
-- Primary: Monaco `editor.deltaDecorations()` API
-- Fallback: CSS class injection if Monaco API unavailable
-- Rationale: Best visual integration when possible, guaranteed functionality always
+**Integration Strategy:** DOM-Based Highlighting
+- Google Apps Script does NOT expose Monaco Editor APIs (`window.monaco` is undefined)
+- Only DOM elements are accessible (`.monaco-editor`, `.view-lines`)
+- Highlighting via TreeWalker + span injection with CSS classes
+- Rationale: Monaco API is encapsulated by Google; DOM manipulation is the only viable approach
 
-**Detection Strategy:** Combined (MutationObserver + Polling safety net)
-- Primary: MutationObserver watching for Monaco container
-- Backup: Polling every 500ms with 10s timeout
-- Rationale: Efficient detection with fallback for edge cases
+**Detection Strategy:** DOM Container Detection
+- MutationObserver watches for `.view-lines` container appearance
+- No API detection needed (API is not exposed by Google)
+- Rationale: Efficient, reliable detection of when editor is ready
 
 **Highlight Application Flow:**
-1. Detect Monaco editor instance
+1. Detect `.view-lines` container in DOM
 2. Load terms from chrome.storage.sync
-3. Apply decorations/CSS for each term
-4. Listen for editor content changes (debounced)
-5. Re-apply decorations on content change
+3. Use TreeWalker to find text nodes matching configured terms
+4. Wrap matches in `<span>` elements with CSS classes
+5. Listen for editor content changes via MutationObserver (debounced 150ms)
+6. Re-apply highlights on content change
+
+### Lessons Learned - Architecture Pivot
+
+**Original Assumption:** Monaco Editor API would be exposed via `window.monaco.editor.getEditors()`, allowing use of native `deltaDecorations()` API for highlighting.
+
+**Discovery:** Google Apps Script encapsulates Monaco internally without exposing global APIs. Only DOM elements (`.monaco-editor`, `.view-lines`) are accessible. Testing confirmed `window.monaco` is undefined on script.google.com.
+
+**Pivot Decision:** Eliminated API detection and Monaco Decorators approach (Stories 2.1, 2.2). Promoted DOM-based highlighting (originally planned as "fallback") to primary and only implementation (Stories 2.4, 2.5, 2.6).
+
+**Outcome:**
+- Simpler architecture (~40% less code)
+- Same functionality as originally planned
+- Better alignment with reality
+- No unnecessary API detection attempts
+
+**Impact:** Stories 2.1 and 2.2 marked as DEPRECATED. Stories 2.4-2.6 complete the refactor to remove dual-mode complexity.
+
+**See:** [ADR: Architecture Pivot to DOM-Only](./architecture-pivot-dom-only.md)
 
 ### Infrastructure & Deployment
 
@@ -222,14 +242,14 @@ interface HighlightMessage {
 1. Project setup (TypeScript, manifest.json)
 2. Storage layer (chrome.storage.sync wrapper)
 3. Popup UI (term management)
-4. Content script (Monaco detection)
-5. Highlighting engine (decorators + fallback)
+4. Content script (DOM container detection)
+5. Highlighting engine (DOM-based)
 6. Integration testing
 
 **Cross-Component Dependencies:**
 - Content script depends on storage schema
 - Popup depends on storage schema
-- Highlighting engine depends on Monaco detection
+- Highlighting engine depends on DOM container detection
 
 ## Implementation Patterns & Consistency Rules
 
@@ -368,17 +388,18 @@ console.log(`${LOG_PREFIX} Initialized`);
 console.error(`${LOG_PREFIX} Error:`, error);
 ```
 
-**Monaco Fallback Pattern:**
+**DOM Highlighting Pattern:**
 ```typescript
-// Try Monaco API first, fallback to CSS
+// DOM-only approach (Monaco API not exposed by Google)
 function applyHighlights(terms: TermConfig[]): void {
-  const monaco = detectMonacoInstance();
+  const viewLines = document.querySelector('.view-lines');
 
-  if (monaco) {
-    applyMonacoDecorators(monaco, terms);
-  } else {
-    applyCssFallback(terms);
+  if (!viewLines) {
+    console.error('[Highlight Extension] .view-lines container not found');
+    return;
   }
+
+  applyDomHighlights(viewLines, terms);
 }
 ```
 
@@ -398,14 +419,16 @@ const debouncedApply = debounce(() => {
 1. Follow naming conventions exactly as specified above
 2. Use the defined message and storage interfaces
 3. Include `LOG_PREFIX` in all console statements
-4. Implement Monaco fallback pattern for highlighting
-5. Debounce editor change handlers
+4. Implement DOM-based highlighting pattern (check for `.view-lines` container)
+5. Debounce editor change handlers (150ms minimum)
 
 **Anti-Patterns to Avoid:**
+- Attempting to access `window.monaco` (API is NOT exposed by Google)
 - Direct storage access without the wrapper function
 - Hardcoded storage keys (use `STORAGE_KEY` constant)
 - Missing error handling on Chrome API calls
 - Synchronous message handlers without `return true`
+- Assuming Monaco API is available (it is NOT)
 
 ## Project Structure & Boundaries
 
@@ -427,9 +450,7 @@ apps-script-overhaul-extension/
 │   │
 │   ├── content/
 │   │   ├── content.ts            # Main content script entry
-│   │   ├── monaco-detector.ts    # Monaco detection logic
-│   │   ├── highlighter.ts        # Highlighting engine (decorators + fallback)
-│   │   └── css-fallback.ts       # CSS injection fallback
+│   │   └── dom-highlighter.ts    # DOM-based highlighting engine (TreeWalker + span injection)
 │   │
 │   ├── shared/
 │   │   ├── types.ts              # Shared TypeScript interfaces
@@ -499,9 +520,7 @@ apps-script-overhaul-extension/
 
 **Highlighting Engine (FR6-FR10):**
 - `src/content/content.ts` - Entry point, orchestration
-- `src/content/monaco-detector.ts` - Monaco detection (MutationObserver + polling)
-- `src/content/highlighter.ts` - Decoration application logic
-- `src/content/css-fallback.ts` - CSS-only fallback implementation
+- `src/content/dom-highlighter.ts` - DOM-based highlighting (TreeWalker + span injection with CSS classes)
 
 **Data Persistence (FR11-FR13):**
 - `src/shared/storage.ts` - chrome.storage.sync wrapper
@@ -518,8 +537,8 @@ apps-script-overhaul-extension/
 - Both → Storage: `chrome.storage.sync.get/set()`
 
 **External Integration:**
-- Monaco Editor API (if exposed): `window.monaco.editor`
-- Google Apps Script DOM: Content script injection target
+- Google Apps Script DOM: Content script injection target (`.monaco-editor`, `.view-lines`)
+- Note: Monaco Editor API is NOT exposed (`window.monaco` is undefined)
 
 ### File Responsibilities
 
@@ -528,9 +547,7 @@ apps-script-overhaul-extension/
 | `manifest.json` | Extension configuration and permissions |
 | `popup.ts` | User interaction handling for term management |
 | `content.ts` | Content script lifecycle and coordination |
-| `monaco-detector.ts` | Finding Monaco editor instance |
-| `highlighter.ts` | Applying/removing highlights |
-| `css-fallback.ts` | CSS-only highlighting when API unavailable |
+| `dom-highlighter.ts` | DOM-based highlighting (TreeWalker + span injection) |
 | `storage.ts` | All chrome.storage.sync operations |
 | `types.ts` | TypeScript interface definitions |
 | `constants.ts` | Shared constants and configuration |
@@ -606,13 +623,13 @@ All technology choices are fully compatible:
 
 | NFR | Requirement | Architectural Support |
 |-----|------------|----------------------|
-| NFR1 | <100ms highlight | Monaco Decorators API + debounce |
+| NFR1 | <100ms highlight | DOM-based highlighting + debounce |
 | NFR2 | <200ms updates | Direct messaging + storage events |
 | NFR3 | No typing lag | Debounced re-application (150ms) |
 | NFR4 | <10MB footprint | Zero runtime dependencies |
-| NFR5 | Graceful fallback | Hybrid strategy (API → CSS) |
-| NFR6 | Timing-independent detection | MutationObserver + polling |
-| NFR7 | Non-intrusive | Decorators API respects Monaco |
+| NFR5 | Graceful fallback | DOM-only approach (no API dependency) |
+| NFR6 | Timing-independent detection | MutationObserver watching for `.view-lines` |
+| NFR7 | Non-intrusive | DOM manipulation respects editor structure |
 | NFR8 | Persistent after refresh | chrome.storage.sync |
 | NFR9 | Immediate saves | Async storage with error handling |
 
