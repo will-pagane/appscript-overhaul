@@ -1,5 +1,6 @@
 import { LOG_PREFIX } from '../shared/constants.js';
-import { applyHighlights } from './dom-highlighter.js';
+import { TermConfig } from '../shared/types.js';
+import { applyHighlights, clearHighlights } from './dom-highlighter.js';
 import { loadTerms } from '../shared/storage.js';
 
 /**
@@ -72,17 +73,21 @@ initializeHighlighting();
  * When user updates terms in popup, automatically re-apply highlights
  */
 chrome.storage.onChanged.addListener(async (changes, areaName) => {
-  if (areaName === 'sync' && changes.highlightTerms) {
-    console.log(`${LOG_PREFIX} Terms updated, re-applying highlights...`);
+  try {
+    if (areaName === 'sync' && changes.highlightTerms) {
+      const newTerms: TermConfig[] = changes.highlightTerms.newValue || [];
 
-    const newTerms = changes.highlightTerms.newValue?.terms || [];
+      if (newTerms.length === 0) {
+        console.log(`${LOG_PREFIX} Terms updated, clearing all highlights`);
+        clearHighlights();
+        return;
+      }
 
-    if (newTerms.length === 0) {
-      console.log(`${LOG_PREFIX} No terms configured, skipping highlights`);
-      return;
+      // Re-apply highlights with new terms
+      console.log(`${LOG_PREFIX} Terms updated, re-applying ${newTerms.length} highlights...`);
+      applyHighlights(newTerms);
     }
-
-    // Re-apply highlights with new terms
-    applyHighlights(newTerms);
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Storage change handler error:`, error);
   }
 });

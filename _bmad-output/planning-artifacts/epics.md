@@ -7,7 +7,7 @@ inputDocuments:
 status: complete
 completedAt: '2026-01-08'
 epicCount: 2
-storyCount: 9
+storyCount: 11
 frCoverage: '14/14 (100%)'
 ---
 
@@ -406,6 +406,76 @@ So that I have flexible highlighting options and better visual contrast for diff
 - Ensure existing configurations without `colorTarget` default to 'background' for backward compatibility
 
 **User Value:** More flexible highlighting (some terms better with font color, others with background), improved readability and visual contrast.
+
+### Story 2.9: Word Boundary Matching for Highlights **[BUG FIX]**
+
+As a user,
+I want my configured terms to only match as complete identifiers (not partial substrings within other words),
+So that highlighting "ss" doesn't incorrectly highlight the "ss" inside "displayMessage" or "message".
+
+**Acceptance Criteria:**
+
+**Given** I have added the term "ss" to my highlight configuration
+**When** the editor displays code containing "displayMessage"
+**Then** the "ss" inside "displayMessage" is NOT highlighted
+**And** only standalone "ss" identifiers are highlighted
+
+**Given** I have added the term "ss" to my highlight configuration
+**When** the editor displays code like `SpreadsheetApp.ss.getSheets()`
+**Then** the "ss" between the dots IS highlighted (it's a valid identifier)
+
+**Given** I have added the term "ui" to my highlight configuration
+**When** the editor displays code containing `SpreadsheetApp.getUi()`
+**Then** the "Ui" inside "getUi" is NOT highlighted (it's part of another identifier)
+
+**Given** I have added a multi-word term like "getUi" to my highlight configuration
+**When** the editor displays code containing `SpreadsheetApp.getUi()`
+**Then** "getUi" IS highlighted (exact identifier match)
+
+**Given** I have added the term "app" to my highlight configuration
+**When** the editor displays code like `SpreadsheetApp` and `app.doSomething()`
+**Then** only `app` in `app.doSomething()` is highlighted (not the "app" inside "SpreadsheetApp")
+
+**Technical Requirements:**
+- Replace `indexOf()` with word boundary regex pattern
+- Use negative lookbehind `(?<![a-zA-Z0-9_])` and lookahead `(?![a-zA-Z0-9_])`
+- Escape special regex characters in user-provided terms
+- Maintain performance requirements (NFR1, NFR2, NFR3)
+
+**See:** `_bmad-output/implementation-artifacts/2-9-word-boundary-matching-for-highlights.md`
+
+### Story 2.10: Fix Term Deletion Not Clearing Highlights **[BUG FIX]**
+
+As a user,
+I want deleted terms to be immediately removed from the editor highlighting,
+So that when I remove a term from my configuration, it no longer appears highlighted.
+
+**Problem Description:**
+
+When a user deletes a term from the popup, the term is correctly removed from storage, but the highlights in the editor persist until page refresh.
+
+**Root Cause:**
+
+1. **Incorrect Data Path:** `content.ts` line 78 reads `changes.highlightTerms.newValue?.terms` but storage structure is `{ highlightTerms: TermConfig[] }` directly (not nested `.terms`)
+2. **No Clear on Empty:** When `newTerms.length === 0`, code returns early without calling `clearHighlights()`
+
+**Acceptance Criteria:**
+
+**Given** I have terms configured with highlights visible in the editor
+**When** I delete a single term from the popup
+**Then** that term's highlights are immediately removed from the editor (within 200ms per NFR2)
+**And** other terms remain highlighted
+
+**Given** I have terms configured with highlights visible in the editor
+**When** I delete all terms from the popup
+**Then** all highlights are immediately removed from the editor
+**And** the editor shows normal code without any highlight spans
+
+**Technical Fix:**
+- Change `changes.highlightTerms.newValue?.terms || []` to `changes.highlightTerms.newValue || []`
+- Add `clearHighlights()` call when terms array is empty
+
+**See:** `_bmad-output/implementation-artifacts/2-10-fix-term-deletion-not-clearing-highlights.md`
 
 ### ~~Story 2.4: Real-time Updates on Content and Config Changes~~ **[CANCELLED]**
 

@@ -3,6 +3,71 @@ import { TermConfig } from '../shared/types.js';
 import { debounce } from '../utils/debounce.js';
 
 /**
+ * Cache for compiled word boundary patterns
+ * Key: term string, Value: compiled RegExp
+ * Cleared when terms change to avoid stale patterns
+ */
+const patternCache: Map<string, RegExp> = new Map();
+
+/**
+ * Escape special regex characters in a string
+ * Handles: . * + ? ^ $ { } ( ) | [ ] \
+ *
+ * @param str String to escape for use in RegExp
+ * @returns Escaped string safe for regex pattern
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Create a word boundary pattern for code identifiers
+ * Uses negative lookbehind/lookahead to match only complete identifiers
+ * Patterns are cached for performance (avoid recompiling per text node)
+ *
+ * Pattern: (?<![a-zA-Z0-9_])TERM(?![a-zA-Z0-9_])
+ * - Does NOT match "ss" inside "displayMessage" (preceded by identifier char)
+ * - DOES match "ss" in "foo.ss.bar" (preceded/followed by dot)
+ * - DOES match "ss" in "(ss)" (preceded/followed by parenthesis)
+ *
+ * @param term The search term (will be escaped for regex)
+ * @returns RegExp pattern with 'g' flag for global matching, or null if term is invalid
+ */
+function createWordBoundaryPattern(term: string): RegExp | null {
+  // Guard against empty or whitespace-only terms
+  if (!term || term.trim().length === 0) {
+    return null;
+  }
+
+  // Return cached pattern if available
+  const cached = patternCache.get(term);
+  if (cached) {
+    cached.lastIndex = 0; // Reset state for reuse
+    return cached;
+  }
+
+  try {
+    const escapedTerm = escapeRegex(term);
+    // Negative lookbehind: NOT preceded by identifier char (letter, digit, underscore)
+    // Negative lookahead: NOT followed by identifier char
+    const pattern = new RegExp(`(?<![a-zA-Z0-9_])${escapedTerm}(?![a-zA-Z0-9_])`, 'g');
+    patternCache.set(term, pattern);
+    return pattern;
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Invalid regex pattern for term "${term}":`, error);
+    return null;
+  }
+}
+
+/**
+ * Clear the pattern cache
+ * Should be called when terms change to ensure fresh patterns
+ */
+function clearPatternCache(): void {
+  patternCache.clear();
+}
+
+/**
  * Module state: MutationObserver for content changes
  */
 let contentObserver: MutationObserver | null = null;
@@ -74,11 +139,12 @@ export function findTextNodes(container: HTMLElement): Text[] {
 }
 
 /**
- * Wrap text with highlight span
+ * Wrap text with highlight span using word boundary matching
+ * Only matches complete identifiers, not partial substrings
  * Recursively processes all occurrences of term in text node
  *
  * @param textNode Text node to process
- * @param term Term to search for
+ * @param term Term to search for (only complete identifiers matched)
  * @param className CSS class to apply
  */
 export function wrapTextWithHighlight(
@@ -87,19 +153,27 @@ export function wrapTextWithHighlight(
   className: string
 ): void {
   const content = textNode.textContent || '';
-  const index = content.indexOf(term);
 
-  if (index === -1) return;
+  // Use word boundary regex to find only complete identifier matches
+  const pattern = createWordBoundaryPattern(term);
+  if (!pattern) return; // Invalid or empty term
+
+  pattern.lastIndex = 0; // Reset regex state
+  const match = pattern.exec(content);
+
+  if (!match) return;
+
+  const index = match.index;
 
   // Split: before | match | after
   const before = content.substring(0, index);
-  const match = content.substring(index, index + term.length);
+  const matchText = content.substring(index, index + term.length);
   const after = content.substring(index + term.length);
 
   // Create highlight span
   const span = document.createElement('span');
   span.className = className;
-  span.textContent = match;
+  span.textContent = matchText;
 
   // Replace text node with fragments
   const parent = textNode.parentNode;
@@ -224,6 +298,9 @@ export function applyHighlights(terms: TermConfig[]): boolean {
     });
     container.normalize();
 
+    // Clear pattern cache when terms change (ensures fresh compilation)
+    clearPatternCache();
+
     // Store terms for re-application on content changes
     storedTerms = terms;
 
@@ -263,7 +340,11 @@ export function applyHighlights(terms: TermConfig[]): boolean {
         }
 
         const content = textNode.textContent || '';
-        const termCount = (content.match(new RegExp(termConfig.term, 'g')) || []).length;
+        // Use word boundary pattern for consistent counting with wrapTextWithHighlight
+        const wordBoundaryPattern = createWordBoundaryPattern(termConfig.term);
+        if (!wordBoundaryPattern) return; // Skip invalid/empty terms
+
+        const termCount = (content.match(wordBoundaryPattern) || []).length;
         if (termCount > 0) {
           occurrenceCount += termCount;
           wrapTextWithHighlight(textNode, termConfig.term, className);
