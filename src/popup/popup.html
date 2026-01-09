@@ -21,14 +21,54 @@
           maxlength="100"
           required
         >
-        <input
-          type="color"
-          id="color-picker"
-          class="color-picker"
-          value="#ff69b4"
-          aria-label="Select highlight color"
-        >
       </div>
+
+      <!-- Color Target Selection -->
+      <div class="color-target-selection">
+        <label class="color-target-label">Apply color to:</label>
+        <div class="color-target-options">
+          <label class="color-target-option">
+            <input
+              type="radio"
+              name="color-target"
+              value="background"
+              checked
+              aria-label="Apply color to background"
+            >
+            <span>Background</span>
+          </label>
+          <label class="color-target-option">
+            <input
+              type="radio"
+              name="color-target"
+              value="font"
+              aria-label="Apply color to font"
+            >
+            <span>Font</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Color Selection Section -->
+      <div class="color-selection">
+        <!-- Predefined Color Grid -->
+        <div id="color-grid" class="color-grid" role="grid" aria-label="Predefined color palette">
+          <!-- Rendered dynamically by popup.ts -->
+        </div>
+
+        <!-- Custom Color Picker -->
+        <div class="custom-color-section">
+          <label for="color-picker" class="custom-color-label">Custom color:</label>
+          <input
+            type="color"
+            id="color-picker"
+            class="color-picker"
+            value="#ff69b4"
+            aria-label="Select custom highlight color"
+          >
+        </div>
+      </div>
+
       <button type="submit" class="add-button">Add</button>
     </form>
 
@@ -38,6 +78,48 @@
     <!-- Terms List -->
     <div id="terms-list" class="terms-list">
       <!-- Terms will be rendered here -->
+    </div>
+  </div>
+
+  <!-- Color Grid Modal for Edit Mode -->
+  <div id="color-modal" class="color-modal hidden">
+    <div class="color-modal-backdrop"></div>
+    <div class="color-modal-content">
+      <div class="color-modal-header">
+        <h3>Select Color</h3>
+        <button type="button" class="color-modal-close" aria-label="Close">&times;</button>
+      </div>
+
+      <!-- Color Target Selection in Edit Mode -->
+      <div class="color-target-selection">
+        <label class="color-target-label">Apply color to:</label>
+        <div class="color-target-options">
+          <label class="color-target-option">
+            <input
+              type="radio"
+              name="edit-color-target"
+              value="background"
+              aria-label="Apply color to background"
+            >
+            <span>Background</span>
+          </label>
+          <label class="color-target-option">
+            <input
+              type="radio"
+              name="edit-color-target"
+              value="font"
+              aria-label="Apply color to font"
+            >
+            <span>Font</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="edit-color-grid" class="color-grid"></div>
+      <div class="custom-color-section">
+        <label for="edit-color-picker" class="custom-color-label">Custom color:</label>
+        <input type="color" id="edit-color-picker" class="color-picker" value="#ff69b4">
+      </div>
     </div>
   </div>
 

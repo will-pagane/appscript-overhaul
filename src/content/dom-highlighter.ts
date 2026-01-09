@@ -154,8 +154,9 @@ export function clearHighlights(): void {
 /**
  * Inject CSS styles for term highlighting
  * Creates or updates a <style> element in document head
+ * Applies color to either font or background based on colorTarget
  *
- * @param terms Array of terms with their colors
+ * @param terms Array of terms with their colors and color targets
  */
 function injectHighlightStyles(terms: TermConfig[]): void {
   const styleId = 'highlight-extension-styles';
@@ -167,11 +168,20 @@ function injectHighlightStyles(terms: TermConfig[]): void {
     document.head.appendChild(styleEl);
   }
 
-  // Generate CSS for each term
+  // Generate CSS for each term with colorTarget support
   const css = terms.map((term, index) => {
     // Basic hex color validation
     const color = /^#[0-9A-Fa-f]{6}$/.test(term.color) ? term.color : '#ffff00';
-    return `.highlight-term-${index} { color: ${color}; font-weight: bold; }`;
+
+    // Default to 'background' if colorTarget is missing (backward compatibility)
+    const colorTarget = term.colorTarget ?? 'background';
+
+    // Apply color to font or background based on colorTarget
+    if (colorTarget === 'font') {
+      return `.highlight-term-${index} { color: ${color}; font-weight: bold; }`;
+    } else {
+      return `.highlight-term-${index} { background-color: ${color}; font-weight: bold; }`;
+    }
   }).join('\n');
 
   styleEl.textContent = css;

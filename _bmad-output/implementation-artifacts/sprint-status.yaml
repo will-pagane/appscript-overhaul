@@ -48,11 +48,13 @@ development_status:
   epic-1-retrospective: optional
 
   # Epic 2: DOM-Based Highlighting Engine (PIVOTED from Monaco API approach)
-  epic-2: done
+  epic-2: in-progress
   2-1-content-script-foundation-and-monaco-detection: done # DEPRECATED - based on wrong assumption
   2-2-term-highlighting-with-monaco-decorators-api: done # DEPRECATED - API not exposed by Google
   2-3-css-fallback-highlighting: done # Actually the ONLY working approach!
   2-4-remove-monaco-api-detection-logic: done # REFACTOR - all tests passed, bug fixed
   2-5-refactor-to-dom-only-highlighter: done # REFACTOR - consolidated to single module, file switching works
   2-6-update-architecture-documentation: done # REFACTOR - all docs updated, ADR created
+  2-7-predefined-color-grid-selector: done # NEW - Add color grid UI for faster, consistent color selection
+  2-8-font-background-color-toggle-for-highlights: in-progress # NEW - Allow choosing font vs background color per term
   epic-2-retrospective: optional

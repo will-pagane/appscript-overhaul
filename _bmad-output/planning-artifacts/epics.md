@@ -7,7 +7,7 @@ inputDocuments:
 status: complete
 completedAt: '2026-01-08'
 epicCount: 2
-storyCount: 7
+storyCount: 9
 frCoverage: '14/14 (100%)'
 ---
 
@@ -328,6 +328,84 @@ So that future development is guided by accurate information about what works.
 - Verify no misleading information remains in documentation
 
 **See:** `_bmad-output/implementation-artifacts/2-6-update-architecture-documentation.md`
+
+### Story 2.7: Predefined Color Grid Selector
+
+As a user,
+I want to see a grid of predefined colors in the popup alongside the custom color picker,
+So that I can quickly select consistent colors without manually typing hex codes or using an imprecise color picker.
+
+**Acceptance Criteria:**
+
+**Given** I open the extension popup to add or edit a term
+**When** I see the color selection UI
+**Then** I see a grid of ~70-80 predefined colors (similar to Google Sheets color palette)
+**And** I also see the native `<input type="color">` picker for custom colors
+**And** the grid is organized in logical color families (reds, oranges, yellows, greens, blues, purples, grays)
+
+**Given** I want to add a new term with a color
+**When** I click a color in the predefined grid
+**Then** that color is immediately selected (no need to click "Add" separately for color selection)
+**And** the color input field shows the selected hex value
+**And** I can proceed to add the term with that color
+
+**Given** I want a custom color not in the grid
+**When** I click the custom color picker
+**And** I select a color using the browser's native color picker
+**Then** that custom color is selected
+**And** I can proceed to add the term with that custom color
+
+**Given** I want to edit an existing term's color
+**When** I click on the term's current color
+**Then** I see both the predefined color grid and the custom picker
+**And** I can select from either option
+**And** the color updates immediately in storage when I select a new color
+
+**User Value:** Faster term configuration (3 clicks vs typing #FF5733), consistent color selection across all terms, improved color precision.
+
+### Story 2.8: Font/Background Color Toggle for Highlights
+
+As a user,
+I want to choose whether each highlight pattern affects the font color or background color,
+So that I have flexible highlighting options and better visual contrast for different terms.
+
+**Acceptance Criteria:**
+
+**Given** I open the extension popup to add a new term
+**When** I see the add term form
+**Then** I see a selector/toggle with two options: "Font Color" and "Background Color"
+**And** "Background Color" is selected by default (most common use case)
+
+**Given** I add a new term with "Font Color" selected
+**When** I save the term
+**Then** the term configuration stores: `{ term: "foo", color: "#ff0000", colorTarget: "font" }`
+**And** the editor highlights show the term with colored font (foreground) and normal background
+
+**Given** I add a new term with "Background Color" selected
+**When** I save the term
+**Then** the term configuration stores: `{ term: "bar", color: "#ffff00", colorTarget: "background" }`
+**And** the editor highlights show the term with normal font and colored background
+
+**Given** I have existing terms in my configuration
+**When** I edit a term's color target (font ↔ background)
+**Then** the configuration updates immediately in storage
+**And** the editor re-applies highlights with the new color target within 200ms (NFR2)
+**And** no page refresh is required
+
+**Given** I have multiple terms with different color targets
+**When** the editor displays my code
+**Then** some terms show font color highlighting
+**And** other terms show background color highlighting
+**And** all highlights work simultaneously without conflicts
+
+**Technical Requirements:**
+- Update `TermConfig` interface in `src/shared/types.ts` to include `colorTarget: 'font' | 'background'`
+- Update storage schema to support the new field (backward compatible: default to 'background' if missing)
+- Update `dom-highlighter.ts` to apply either `color` or `background-color` CSS property based on `colorTarget`
+- Update popup UI to include the selector (radio buttons or dropdown)
+- Ensure existing configurations without `colorTarget` default to 'background' for backward compatibility
+
+**User Value:** More flexible highlighting (some terms better with font color, others with background), improved readability and visual contrast.
 
 ### ~~Story 2.4: Real-time Updates on Content and Config Changes~~ **[CANCELLED]**
 
